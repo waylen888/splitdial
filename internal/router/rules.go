@@ -4,6 +4,7 @@ import (
 	"net"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/waylen888/splitdial/internal/config"
 )
@@ -11,6 +12,7 @@ import (
 // Router handles traffic routing decisions based on rules.
 type Router struct {
 	rules []config.RouteRule
+	mu    sync.RWMutex
 }
 
 // NewRouter creates a new router with the given rules.
@@ -20,6 +22,8 @@ func NewRouter(rules []config.RouteRule) *Router {
 
 // UpdateRules updates the routing rules.
 func (r *Router) UpdateRules(rules []config.RouteRule) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.rules = rules
 }
 
@@ -32,6 +36,9 @@ type RouteResult struct {
 
 // Route determines which interface to use for the given destination.
 func (r *Router) Route(host string, port int) RouteResult {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	for _, rule := range r.rules {
 		if !rule.Enabled {
 			continue

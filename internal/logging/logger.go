@@ -55,6 +55,25 @@ type Logger struct {
 }
 
 var defaultLogger *Logger
+var levelVar = new(slog.LevelVar)
+
+// SetLevel changes the log level dynamically.
+func SetLevel(levelStr string) {
+	var level slog.Level
+	switch levelStr {
+	case "debug":
+		level = slog.LevelDebug
+	case "info":
+		level = slog.LevelInfo
+	case "warn":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
+	}
+	levelVar.Set(level)
+}
 
 // Init initializes the global logger with the given configuration.
 func Init(cfg *Config) error {
@@ -76,6 +95,9 @@ func Init(cfg *Config) error {
 	default:
 		level = slog.LevelInfo
 	}
+
+	// Set the dynamic level
+	levelVar.Set(level)
 
 	// Setup output writer
 	var writer io.Writer
@@ -106,7 +128,7 @@ func Init(cfg *Config) error {
 
 	// Create handler based on format
 	opts := &slog.HandlerOptions{
-		Level: level,
+		Level: levelVar,
 	}
 
 	var handler slog.Handler

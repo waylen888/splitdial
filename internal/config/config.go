@@ -2,8 +2,12 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"sync"
+	"time"
 
+	"github.com/fsnotify/fsnotify"
+	"github.com/waylen888/splitdial/internal/logging"
 	"gopkg.in/yaml.v3"
 )
 
@@ -178,4 +182,71 @@ func (cm *ConfigManager) RemoveRoute(id string) bool {
 		}
 	}
 	return false
+}
+
+// WatchConfig starts watching the config file for changes.
+func (cm *ConfigManager) WatchConfig(onChange func(*Config)) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+
+	// Watch the directory, not the file, to handle atomic writes (rename/move)
+	configDir := filepath.Dir(cm.filePath)
+	if err := watcher.Add(configDir); err != nil {
+		watcher.Close()
+		return err
+	}
+
+	go func() {
+		defer watcher.Close()
+		var lastReload time.Time
+
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+
+				// Check if the event matches our config file
+				if filepath.Base(event.Name) == filepath.Base(cm.filePath) {
+					// Handle Write and Create (which happens on atomic rename/move)
+					if event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Create == fsnotify.Create {
+						// Simple debounce
+						if time.Since(lastReload) < 100*time.Millisecond {
+							continue
+						}
+
+						logging.Info("Configuration file changed", "op", event.Op.String())
+
+						// Slight delay to ensure write is complete
+						time.Sleep(50 * time.Millisecond)
+
+						if err := cm.Load(); err != nil {
+							logging.Error("Failed to reload configuration", "error", err)
+							continue
+						}
+
+						lastReload = time.Now()
+						logging.Info("Configuration reloaded successfully")
+
+						if onChange != nil {
+							// Execute callback in a non-blocking way or make sure it's fast
+							// Here we execute directly as it updates router/logger which is fast
+							onChange(cm.Get())
+						}
+					}
+				}
+
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				logging.Error("Config watcher error", "error", err)
+			}
+		}
+	}()
+
+	return nil
 }

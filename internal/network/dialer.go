@@ -31,7 +31,13 @@ func (id *InterfaceDialer) DialContext(ctx context.Context, network, address, in
 	// Use GetLocalAddrForTarget to select appropriate IPv4 or IPv6 local address
 	localAddr, err := id.interfaceManager.GetLocalAddrForTarget(interfaceType, address)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get local address for %s: %w", interfaceType, err)
+		logging.Warn("Interface unavailable, falling back to default route",
+			"interface", interfaceType,
+			"target", address,
+			"error", err,
+		)
+		// Fallback: Proceed with nil localAddr (system default)
+		localAddr = nil
 	}
 
 	logging.Debug("Dialing connection",

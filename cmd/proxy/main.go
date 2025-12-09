@@ -153,6 +153,24 @@ func main() {
 	interfaceDialer := network.NewInterfaceDialer(interfaceManager, 30*time.Second)
 	routerEngine := router.NewRouter(cfg.Routes)
 
+	// Start watching config for changes
+	if err := configManager.WatchConfig(func(newCfg *config.Config) {
+		logging.Info("Applying new configuration...")
+
+		// Update router rules
+		routerEngine.UpdateRules(newCfg.Routes)
+
+		// Update logging level
+		logging.SetLevel(newCfg.Logging.Level)
+
+		logging.Info("Configuration applied",
+			"rules_count", len(newCfg.Routes),
+			"log_level", newCfg.Logging.Level,
+		)
+	}); err != nil {
+		logging.Warn("Failed to start config watcher", "error", err)
+	}
+
 	// Create proxy servers
 	socks5Server := proxy.NewSOCKS5Server(cfg.Server.SOCKSAddr, routerEngine, interfaceDialer)
 	httpProxy := proxy.NewHTTPProxyServer(cfg.Server.HTTPAddr, routerEngine, interfaceDialer)
