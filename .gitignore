@@ -1,0 +1,56 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Debug binaries and data
+__debug_bin*
+debug-data/
+*.test
+
+# Config (use config.yaml.example as template)
+config.yaml
+
+# Go
+*.out
+vendor/
+
+# IDE
+.idea/
+# .vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Web (Node.js / Svelte)
+# web/node_modules/
+# web/dist/
+# web/.svelte-kit/
+# web/build/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# Environment files (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+*.cover
+*.coverage
+

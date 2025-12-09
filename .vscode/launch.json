@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Proxy",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/proxy",
+      "args": [
+        "-config",
+        "debug-data/config.yaml"
+      ],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

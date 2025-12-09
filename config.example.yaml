@@ -1,0 +1,59 @@
+# Splitdial Proxy Configuration Example
+# Copy this file to config.yaml and modify as needed
+
+server:
+  socks_addr: "127.0.0.1:1080"
+  http_addr: "127.0.0.1:8080"
+  api_addr: "127.0.0.1:8081"
+
+interfaces:
+  cable: "en0"       # Ethernet / Wired interface
+  wifi: "en1"        # Wi-Fi interface
+
+logging:
+  level: "info"           # debug, info, warn, error
+  format: "text"          # text, json
+  output: "stdout"        # stdout, stderr, or file path like "logs/proxy.log"
+  # File rotation settings (only used when output is a file path)
+  max_size: 100           # Max file size in MB before rotation
+  max_backups: 3          # Number of old log files to retain
+  max_age: 28             # Days to retain old log files
+  compress: true          # Compress rotated files
+
+routes:
+  # Example: Route streaming services via Wi-Fi
+  - id: "streaming"
+    name: "Streaming Services"
+    match:
+      domains:
+        - "*.netflix.com"
+        - "*.youtube.com"
+        - "*.twitch.tv"
+    interface: "wifi"
+    enabled: false
+
+  # Example: Route specific IP via Wi-Fi
+  - id: "custom-ip"
+    name: "Custom IP Route"
+    match:
+      ips:
+        - "192.168.1.100"
+    interface: "wifi"
+    enabled: false
+
+  # Example: Route work services via cable
+  - id: "work"
+    name: "Work Services"
+    match:
+      domains:
+        - "*.github.com"
+        - "*.amazonaws.com"
+    interface: "cable"
+    enabled: true
+
+  # Default route - catch all traffic
+  - id: "default"
+    name: "Default Route"
+    match: {}
+    interface: "cable"
+    enabled: true
