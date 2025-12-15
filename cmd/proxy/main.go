@@ -99,42 +99,48 @@ func main() {
 	// From now on, use slog
 	logging.Info("Logging initialized", "level", cfg.Logging.Level, "format", cfg.Logging.Format, "output", cfg.Logging.Output)
 
-	// Detect or use configured network interfaces
-	cableIface := cfg.Interfaces.Cable
-	wifiIface := cfg.Interfaces.WiFi
+	// Resolve interface specifications to device names
+	resolver := network.NewInterfaceResolver()
 
-	if cableIface == "" || wifiIface == "" {
-		detectedCable, detectedWifi, err := network.DetectInterfaces()
-		if err != nil {
-			logging.Warn("Could not auto-detect interfaces", "error", err)
+	cableDevice, err := resolver.ResolveDeviceName(cfg.Interfaces.Cable)
+	if err != nil {
+		logging.Warn("Could not resolve cable interface", "spec", cfg.Interfaces.Cable, "error", err)
+		// Try auto-detection as fallback
+		if detected, _, detectErr := network.DetectInterfaces(); detectErr == nil && detected != "" {
+			cableDevice = detected
+			logging.Info("Auto-detected cable interface", "device", cableDevice)
 		}
-		if cableIface == "" && detectedCable != "" {
-			cableIface = detectedCable
-			logging.Info("Auto-detected cable interface", "interface", cableIface)
-		}
-		if wifiIface == "" && detectedWifi != "" {
-			wifiIface = detectedWifi
-			logging.Info("Auto-detected wifi interface", "interface", wifiIface)
+	}
+
+	wifiDevice, err := resolver.ResolveDeviceName(cfg.Interfaces.WiFi)
+	if err != nil {
+		logging.Warn("Could not resolve wifi interface", "spec", cfg.Interfaces.WiFi, "error", err)
+		// Try auto-detection as fallback
+		if _, detected, detectErr := network.DetectInterfaces(); detectErr == nil && detected != "" {
+			wifiDevice = detected
+			logging.Info("Auto-detected wifi interface", "device", wifiDevice)
 		}
 	}
 
 	// Print interface configuration
 	logging.Info("Interface configuration",
-		"cable", cableIface,
-		"wifi", wifiIface,
+		"cable_spec", cfg.Interfaces.Cable,
+		"cable_device", cableDevice,
+		"wifi_spec", cfg.Interfaces.WiFi,
+		"wifi_device", wifiDevice,
 	)
 
 	// Print interface IP addresses for verification
-	im := network.NewInterfaceManager(cableIface, wifiIface)
+	im := network.NewInterfaceManager(cableDevice, wifiDevice)
 	if cableAddr, err := im.GetLocalAddr("cable"); err == nil {
-		logging.Info("Cable interface ready", "ip", cableAddr.IP.String())
+		logging.Info("Cable interface ready", "device", cableDevice, "ip", cableAddr.IP.String())
 	} else {
-		logging.Warn("Cable interface error", "error", err)
+		logging.Warn("Cable interface error", "device", cableDevice, "error", err)
 	}
 	if wifiAddr, err := im.GetLocalAddr("wifi"); err == nil {
-		logging.Info("Wi-Fi interface ready", "ip", wifiAddr.IP.String())
+		logging.Info("Wi-Fi interface ready", "device", wifiDevice, "ip", wifiAddr.IP.String())
 	} else {
-		logging.Warn("Wi-Fi interface error", "error", err)
+		logging.Warn("Wi-Fi interface error", "device", wifiDevice, "error", err)
 	}
 
 	// Print routing rules
@@ -149,7 +155,7 @@ func main() {
 	}
 
 	// Initialize components
-	interfaceManager := network.NewInterfaceManager(cableIface, wifiIface)
+	interfaceManager := network.NewInterfaceManager(cableDevice, wifiDevice)
 	interfaceDialer := network.NewInterfaceDialer(interfaceManager, 30*time.Second)
 	routerEngine := router.NewRouter(cfg.Routes)
 

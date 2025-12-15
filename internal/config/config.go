@@ -37,10 +37,16 @@ type ServerConfig struct {
 	APIAddr   string `yaml:"api_addr"`   // e.g., "127.0.0.1:8081"
 }
 
+// InterfaceSpec defines how to identify a network interface.
+type InterfaceSpec struct {
+	Device       string `yaml:"device,omitempty"`        // Direct device name (e.g., "en7")
+	HardwarePort string `yaml:"hardware_port,omitempty"` // macOS Hardware Port name (e.g., "Wi-Fi")
+}
+
 // InterfaceConfig holds network interface configuration.
 type InterfaceConfig struct {
-	Cable string `yaml:"cable"` // e.g., "en0"
-	WiFi  string `yaml:"wifi"`  // e.g., "en1"
+	Cable InterfaceSpec `yaml:"cable"`
+	WiFi  InterfaceSpec `yaml:"wifi"`
 }
 
 // RouteRule defines a routing rule.
@@ -84,8 +90,8 @@ func DefaultConfig() *Config {
 			APIAddr:   "127.0.0.1:8081",
 		},
 		Interfaces: InterfaceConfig{
-			Cable: "en0",
-			WiFi:  "en1",
+			Cable: InterfaceSpec{Device: "en0"},
+			WiFi:  InterfaceSpec{Device: "en1"},
 		},
 		Logging: LoggingConfig{
 			Level:      "info",

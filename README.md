@@ -39,6 +39,22 @@ Splitdial is a lightweight, rule-based proxy server capable of routing network t
 
 The configuration file is located at `~/.config/splitdial/config.yaml`.
 
+### Network Interface Configuration
+
+You can identify network interfaces in two ways:
+
+**Option 1: Use `hardware_port` (Recommended)**
+
+More stable - survives reboots and device reconnections. Find your hardware ports by running:
+
+```bash
+networksetup -listallhardwareports
+```
+
+**Option 2: Use `device` name directly**
+
+Simpler, but may change after reboot (especially for USB adapters).
+
 ### Example `config.yaml`
 
 ```yaml
@@ -47,9 +63,19 @@ server:
   http_addr: "127.0.0.1:9090"
   api_addr: "127.0.0.1:9091"
 
+# Using hardware_port (recommended - stable across reboots)
 interfaces:
-  cable: "en0"       # Ethernet interface name (e.g., en0, eth0)
-  wifi: "en1"        # Wi-Fi interface name (e.g., en1, wlan0)
+  cable:
+    hardware_port: "USB 10/100/1000 LAN"  # or "Ethernet"
+  wifi:
+    hardware_port: "Wi-Fi"
+
+# Or using device names directly (may change after reboot)
+# interfaces:
+#   cable:
+#     device: "en7"
+#   wifi:
+#     device: "en0"
 
 logging:
   level: "info"

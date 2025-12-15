@@ -10,6 +10,18 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+// expandHomePath expands ~ to the user's home directory.
+func expandHomePath(path string) string {
+	if len(path) == 0 || path[0] != '~' {
+		return path
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return path
+	}
+	return filepath.Join(home, path[1:])
+}
+
 // Config holds logging configuration.
 type Config struct {
 	// Level is the minimum log level (debug, info, warn, error)
@@ -107,8 +119,9 @@ func Init(cfg *Config) error {
 	case "stderr":
 		writer = os.Stderr
 	default:
-		// Assume it's a file path
-		if err := os.MkdirAll(filepath.Dir(cfg.Output), 0755); err != nil {
+		// Assume it's a file path - expand ~ to home directory
+		outputPath := expandHomePath(cfg.Output)
+		if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
 			return err
 		}
 
@@ -118,7 +131,7 @@ func Init(cfg *Config) error {
 		}
 
 		writer = &lumberjack.Logger{
-			Filename:   cfg.Output,
+			Filename:   outputPath,
 			MaxSize:    fc.MaxSize,
 			MaxBackups: fc.MaxBackups,
 			MaxAge:     fc.MaxAge,

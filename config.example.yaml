@@ -6,9 +6,33 @@ server:
   http_addr: "127.0.0.1:8080"
   api_addr: "127.0.0.1:8081"
 
+# Network Interface Configuration
+# You can identify interfaces in two ways:
+#
+# Option 1: Use hardware_port (RECOMMENDED)
+# - More stable - survives reboots and device reconnections
+# - Find your hardware ports by running: networksetup -listallhardwareports
+#
+# Option 2: Use device name directly
+# - Simpler, but may change after reboot (especially for USB adapters)
+#
+# Examples:
+#   cable:
+#     hardware_port: "USB 10/100/1000 LAN"  # Stable
+#   wifi:
+#     hardware_port: "Wi-Fi"
+#
+#   # Or use device names directly:
+#   cable:
+#     device: "en7"
+#   wifi:
+#     device: "en0"
+
 interfaces:
-  cable: "en0"       # Ethernet / Wired interface
-  wifi: "en1"        # Wi-Fi interface
+  cable:
+    hardware_port: "Ethernet"    # Or "USB 10/100/1000 LAN" for USB adapters
+  wifi:
+    hardware_port: "Wi-Fi"
 
 logging:
   level: "info"           # debug, info, warn, error
